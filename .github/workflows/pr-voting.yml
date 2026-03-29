@@ -1,1 +1,32 @@
+name: PR Voting System
 
+on:
+  pull_request:
+    types: [opened, ready_for_review, labeled]
+  issue_comment:
+    types: [created]   # Optional: re-tally when someone reacts (reactions don't trigger webhooks)
+
+jobs:
+  voting:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false   # Skip drafts
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install PyGithub
+
+      - name: Run PR Voting Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: python .github/scripts/pr_voting.py
